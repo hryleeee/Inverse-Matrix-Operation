@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Compute the inverse of a square matrix with exact rational arithmetic and read every elementary matrix that produces it.">
+    <title>Inverse Workbench</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400;1,8..60,600&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        /* Apply a saved theme before first paint to avoid a flash. */
+        try { var t = localStorage.getItem('matrix-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+    </script>
+</head>
+<body>
+    <a class="skip-link" href="#workspace">Skip to the matrix</a>
+
+    <header class="masthead">
+        <div class="masthead-inner">
+            <a class="wordmark" href="#top" aria-label="Inverse Workbench, back to top">
+                <span class="wordmark-glyph" aria-hidden="true"><span class="wg-bracket">[</span><var>A</var><span class="wg-bracket">]</span><sup>−1</sup></span>
+                <span class="wordmark-name">Inverse Workbench</span>
+            </a>
+            <nav class="nav" aria-label="Sections">
+                <a href="#workspace"><span class="nav-no">1</span>Matrix</a>
+                <a href="#result" data-needs-result aria-disabled="true"><span class="nav-no">2</span>Inverse</a>
+                <a href="#verification" data-needs-result aria-disabled="true"><span class="nav-no">3</span>Check</a>
+                <a href="#steps" data-needs-result aria-disabled="true"><span class="nav-no">4</span>Steps</a>
+                <a href="#method"><span class="nav-no">5</span>Method</a>
+            </nav>
+            <button type="button" class="text-btn theme-btn" id="theme-toggle" aria-pressed="false">Dark</button>
+        </div>
+    </header>
+
+    <main id="top">
+        <section class="intro" aria-labelledby="intro-title">
+            <div class="intro-text">
+                <p class="kicker">Gauss–Jordan elimination · exact rational arithmetic</p>
+                <h1 id="intro-title">Compute <var>A</var><sup>−1</sup> and read every elementary matrix that produces it.</h1>
+                <p class="intro-lead">Entries are kept as exact fractions. A matrix is singular only when a pivot is exactly zero. No tolerance or rounding is involved.</p>
+            </div>
+            <figure class="intro-figure">
+                <div class="fig-eq" aria-label="A times A inverse equals I, for A equal to 2, 1; 5, 3">
+                    <div class="mx mx-sm"><table><tr><td>2</td><td>1</td></tr><tr><td>5</td><td>3</td></tr></table></div>
+                    <span class="fig-op">·</span>
+                    <div class="mx mx-sm mx-accent"><table><tr><td>3</td><td>−1</td></tr><tr><td>−5</td><td>2</td></tr></table></div>
+                    <span class="fig-op">=</span>
+                    <div class="mx mx-sm"><table><tr><td>1</td><td>0</td></tr><tr><td>0</td><td>1</td></tr></table></div>
+                </div>
+                <figcaption><span class="fig-no">Fig. 1</span> <var>A</var> · <var>A</var><sup>−1</sup> = <var>I</var> for a 2 × 2 matrix with det <var>A</var> = 1.</figcaption>
+            </figure>
+        </section>
+
+        <!-- §1 Matrix A -->
+        <section class="sheet" id="workspace" aria-labelledby="ws-title">
+            <header class="sheet-label">
+                <span class="sec-no">§1</span>
+                <h2 id="ws-title">Matrix <var>A</var></h2>
+                <p class="sec-meta" id="fill-status" aria-live="polite">0 of 9 entries</p>
+            </header>
+
+            <div class="sheet-body">
+                <div id="alert-area" class="alert-area" aria-live="assertive"></div>
+
+                <div class="controls">
+                    <div class="control">
+                        <span class="control-label" id="size-label">Order</span>
+                        <div class="stepper" role="group" aria-labelledby="size-label">
+                            <button type="button" class="stepper-btn" id="size-minus" aria-label="Decrease matrix order">&minus;</button>
+                            <output class="stepper-value" id="size-value" aria-live="polite">3 × 3</output>
+                            <button type="button" class="stepper-btn" id="size-plus" aria-label="Increase matrix order">+</button>
+                        </div>
+                    </div>
+                    <div class="control">
+                        <label class="control-label" for="example-select">Load</label>
+                        <select id="example-select" class="select">
+                            <option value="">Example matrix…</option>
+                        </select>
+                    </div>
+                    <div class="control control-fill">
+                        <span class="control-label">Fill</span>
+                        <div class="fill-actions">
+                            <button type="button" class="text-btn" id="random-btn">Random</button>
+                            <button type="button" class="text-btn" id="identity-btn">Identity</button>
+                            <button type="button" class="text-btn" id="clear-btn">Clear</button>
+                        </div>
+                    </div>
+                </div>
+
+                <details class="range-details" id="range-details">
+                    <summary>Random entries range from <span id="range-summary">−10 to 10</span></summary>
+                    <div class="range">
+                        <label for="rand-min" class="sr-only">Lowest random number</label>
+                        <input type="text" inputmode="numeric" id="rand-min" class="num-input" autocomplete="off">
+                        <span>to</span>
+                        <label for="rand-max" class="sr-only">Highest random number</label>
+                        <input type="text" inputmode="numeric" id="rand-max" class="num-input" autocomplete="off">
+                    </div>
+                    <p class="field-error" id="range-error" role="alert"></p>
+                </details>
+
+                <div class="instrument">
+                    <div class="instrument-bar">
+                        <span class="instrument-title"><var>A</var> ∈ ℚ<sup id="space-dim">3×3</sup></span>
+                        <span class="instrument-hint">Arrow keys move · Enter advances · Ctrl+Enter computes</span>
+                    </div>
+                    <div class="instrument-field">
+                        <div class="matrix-input" id="matrix-input"></div>
+                    </div>
+                </div>
+                <p class="field-error" id="matrix-error" role="alert"></p>
+
+                <p class="hint">
+                    Integers <code>4</code>, decimals <code>-0.5</code> or fractions <code>3/4</code>, from {{ limits.minValue }} to {{ limits.maxValue }}.
+                    Order 1 to {{ limits.maxDimension }}. To set the whole matrix at once, paste rows from a spreadsheet into the top-left cell.
+                </p>
+
+                <div class="actions">
+                    <button type="button" class="btn-primary" id="solve-btn">
+                        <span class="spinner" aria-hidden="true"></span>
+                        <span class="btn-label">Compute <var>A</var><sup>−1</sup></span>
+                    </button>
+                    <button type="button" class="text-btn" id="reset-btn">Reset workspace</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- §2 Inverse -->
+        <section class="sheet result-sheet" id="result" aria-labelledby="result-title" hidden>
+            <header class="sheet-label">
+                <span class="sec-no">§2</span>
+                <h2 id="result-title" tabindex="-1">Inverse</h2>
+                <p class="sec-meta" id="result-meta"></p>
+            </header>
+            <div class="sheet-body">
+                <p class="stale-note" id="stale-note" hidden><var>A</var> has changed since this result was computed. Compute again to update §2–§4.</p>
+                <div id="result-body"></div>
+            </div>
+        </section>
+
+        <!-- §3 Verification -->
+        <section class="sheet result-sheet" id="verification" aria-labelledby="verify-title" hidden>
+            <header class="sheet-label">
+                <span class="sec-no">§3</span>
+                <h2 id="verify-title">Verification</h2>
+                <p class="sec-meta">Exact products, compared entry by entry with <var>I</var></p>
+            </header>
+            <div class="sheet-body" id="verify-body"></div>
+        </section>
+
+        <!-- §4 Steps -->
+        <section class="sheet result-sheet" id="steps" aria-labelledby="steps-title" hidden>
+            <header class="sheet-label">
+                <span class="sec-no">§4</span>
+                <h2 id="steps-title">Elimination</h2>
+                <p class="sec-meta" id="steps-meta"></p>
+            </header>
+            <div class="sheet-body">
+                <p class="sol-lead">Each row operation is multiplication on the left by an elementary matrix: <var>A</var><sub><var>i</var></sub> = <var>E</var><sub><var>i</var></sub><var>A</var><sub><var>i</var>−1</sub>. The running product <var>P</var><sub><var>i</var></sub> = <var>E</var><sub><var>i</var></sub> ··· <var>E</var><sub>1</sub> becomes <var>A</var><sup>−1</sup>. Point at a highlighted row to trace it through a step.</p>
+                <div id="steps-body"></div>
+                <button type="button" class="text-btn show-all" id="show-all-btn" hidden></button>
+            </div>
+        </section>
+
+        <!-- §5 Method -->
+        <section class="sheet" id="method" aria-labelledby="method-title">
+            <header class="sheet-label">
+                <span class="sec-no">§5</span>
+                <h2 id="method-title">Method</h2>
+                <p class="sec-meta">Reference</p>
+            </header>
+            <div class="sheet-body method-body">
+                <div class="method-eq">
+                    <p class="display-eq"><var>E</var><sub><var>k</var></sub> ··· <var>E</var><sub>2</sub><var>E</var><sub>1</sub><var>A</var> = <var>I</var></p>
+                    <p class="display-eq-sep">therefore</p>
+                    <p class="display-eq"><var>A</var><sup>−1</sup> = <var>E</var><sub><var>k</var></sub> ··· <var>E</var><sub>2</sub><var>E</var><sub>1</sub></p>
+                </div>
+                <table class="ops-table">
+                    <caption class="sr-only">Elementary row operations</caption>
+                    <thead><tr><th scope="col">Operation</th><th scope="col">Notation</th><th scope="col">det <var>E</var></th></tr></thead>
+                    <tbody>
+                        <tr><td>Swap two rows</td><td class="mono">R<sub>i</sub> ↔ R<sub>j</sub></td><td class="mono">−1</td></tr>
+                        <tr><td>Scale a row by <var>c</var> ≠ 0</td><td class="mono">R<sub>i</sub> ← (c) R<sub>i</sub></td><td class="mono"><var>c</var></td></tr>
+                        <tr><td>Add a multiple of another row</td><td class="mono">R<sub>i</sub> ← R<sub>i</sub> + (c) R<sub>j</sub></td><td class="mono">1</td></tr>
+                    </tbody>
+                </table>
+                <ol class="method-list">
+                    <li>For each column, take the first nonzero entry on or below the diagonal as the pivot, swapping rows if needed.</li>
+                    <li>Scale the pivot row so the pivot is 1, then clear every other entry in the column.</li>
+                    <li>If a column has no nonzero pivot, <var>A</var> is singular and has no inverse.</li>
+                    <li>det <var>A</var> = (−1)<sup>swaps</sup> × the product of the pivots.</li>
+                </ol>
+            </div>
+        </section>
+    </main>
+
+    <footer class="colophon">
+        <span>Inverse Workbench</span>
+        <span>Exact arithmetic with <code>fractions.Fraction</code></span>
+        <span>Flask · Python</span>
+    </footer>
+
+    <script>window.LIMITS = {{ limits | tojson }};</script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
