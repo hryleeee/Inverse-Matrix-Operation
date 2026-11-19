@@ -26,14 +26,14 @@ You enter a square matrix (1×1 up to 10×10) in the browser. The Python/Flask s
 
 | Area | Feature |
 |---|---|
-| Input | A graph-paper input grid with row and column indices (the indices of the focused cell light up), order stepper 1–10 (existing values are kept when resizing), arrow-key and Enter navigation, paste from a spreadsheet, CSV or `[1 2; 3 4]` text, live per-cell validation, filled-entry counter |
-| Quick fill | Random (adjustable whole-number range), Identity, Clear, 7 built-in examples (including a singular one and one that needs a row swap) |
-| §2 Inverse | Invertible/singular status, A⁻¹ as the main result, a factored form (1/d)·N when the inverse has fractions, exact **det A**, order, number of row operations |
-| Formats | Exact fractions (`-3/13`) or decimals rounded to 6 significant digits |
-| §3 Verification | A·A⁻¹ and A⁻¹·A recomputed exactly and shown next to I, with a verdict for each; for a singular A, a short explanation of why no inverse can exist |
-| §4 Elimination | Every Eᵢ, the matrices before and after (Aᵢ₋₁ → Aᵢ), the running product Pᵢ (expandable), and hover tracing of the affected rows; logs longer than 10 steps start collapsed to the first 6 |
-| Utilities | Copy A⁻¹ as tab-separated rows (pastes into Excel/Sheets), Reset workspace, a warning when results are out of date after A is edited |
-| UI | Paper, ink and vermilion design system; section navigation (result links stay disabled until there is a result); responsive (phone, tablet, desktop); light and dark themes; keyboard and screen-reader friendly; animations respect reduced-motion settings |
+| Workflow | Five numbered stages in the top bar: **1 Enter matrix · 2 Calculate · 3 Results · 4 Verify · 5 Steps**. A stage turns green when its work is done; Results, Verify and Steps unlock after the first calculation |
+| Step 1 · Enter matrix | Graph-paper grid with row and column numbers (the focused cell's numbers light up); **Size − / +** adds or removes a row and a column together and keeps your numbers; Tab, arrow keys and Enter move between cells; paste a block from Excel/Google Sheets/CSV/`[1 2; 3 4]` into any cell (the matrix grows to fit); empty cells are amber and invalid cells red, each with a tooltip saying what to fix; a "cells filled" counter |
+| Quick fill | **Examples** (7 matrices, including one with no inverse and one that needs a row swap), **Random** (adjustable range), **Identity**, **Clear** |
+| Step 2 · Calculate | **Calculate inverse** (or Ctrl/⌘ + Enter); if cells are empty, the message offers **Fill empty cells with 0**; **Start over** clears everything |
+| Step 3 · Results | A plain verdict ("This matrix has an inverse" / "has no inverse"), your matrix and the inverse side by side, the same inverse with the common fraction taken out, **Fractions / Decimals**, **Copy inverse**, **Edit matrix**, and a facts row (determinant, size, steps used, check) |
+| Step 4 · Verify | "Check passed: the answer is correct", with A × A⁻¹ and A⁻¹ × A each shown next to I |
+| Step 5 · Steps | One collapsible row per row operation: a plain-language sentence (e.g. *Subtract 5 × row 1 from row 2 to make the entry in column 1 zero.*), the notation `R2 ← R2 − (5) R1`, and, when opened, the matrix before and after (plus the elementary matrix and running product for those who want them). **Expand all / Collapse all** |
+| Comfort | Results stay on screen while you edit; they are marked out of date with a **Calculate again** button. Light and dark themes, keyboard navigation, visible focus rings, 40 px targets, reduced-motion support, responsive phone/tablet/desktop layouts |
 
 ## 4. Technology stack
 
@@ -74,7 +74,7 @@ Flask (app.py)
    │  JSON: inverse, inverse_decimal, inverse_factored, determinant,
    │        verification (A·A⁻¹, A⁻¹·A), steps HTML …
    ▼
-Browser renders §2 Inverse, §3 Verification and §4 Elimination
+Browser renders Step 3 Results, Step 4 Verify and Step 5 Steps
 ```
 
 More detail is in [SYSTEM_DOCUMENTATION.md](SYSTEM_DOCUMENTATION.md).
@@ -135,28 +135,28 @@ python app.py
 
 ## 11. Entering a matrix
 
-1. Set the order with **−** and **+** (1×1 to 10×10). Existing entries are kept.
+1. Set the size with **−** and **+** (1×1 to 10×10). A matrix must be square, so each click adds or removes a row *and* a column. Existing entries are kept.
 2. Type a value in each cell. Accepted formats:
    - integers: `4`, `-7`, `+2`
    - finite decimals: `0.5`, `-.25`, `3.`
    - fractions: `3/4`, `-5/2`
 
    Every value must be between **−1000 and 1000**, and each entry can be at most 32 characters. Scientific notation (`1e3`) is not accepted.
-3. Move between cells with the arrow keys. **Enter** moves to the next cell and, on the last cell, calculates.
-4. Or use **Load** (example matrices), **Random** (set its range under *Random entries range*), **Identity** or **Clear**.
-5. To paste a whole matrix, copy it from a spreadsheet or as text (`1 2; 3 4`), then paste it into the top-left cell. A square block resizes A to match.
+3. Move between cells with Tab or the arrow keys. **Enter** moves to the next cell and, on the last cell, calculates.
+4. Or use **Examples**, **Random** (change its range under *Random numbers go from…*), **Identity** or **Clear**.
+5. To paste, copy cells from a spreadsheet (or text such as `1 2; 3 4`) and paste into any cell. A square block pasted into the top-left cell becomes the whole matrix; any other block is placed from the cell you pasted into, and the matrix grows to fit (up to 10×10).
 
-Invalid cells turn red and empty cells turn amber after you try to calculate. The message under the grid names the row and column.
+After you press Calculate, empty cells turn amber and invalid cells red. Hover a cell to see what is wrong; the message under the grid names the row and column. If only empty cells are the problem, **Fill empty cells with 0** fixes them in one click.
 
 ## 12. Calculating the inverse
 
-Press **Compute A⁻¹** (or **Ctrl/⌘ + Enter** in any cell). Three sections appear below the workspace, and the navigation links to them become active:
+Press **Calculate inverse** (or **Ctrl/⌘ + Enter** in any cell). Three sections appear and their stages in the top bar unlock:
 
-- **§2 Inverse:** an *Invertible* or *Singular* tag, A⁻¹ in vermilion brackets (plus the factored form (1/d)·N when the inverse has fractions), det A, the order and the number of row operations, an Exact/Decimal toggle and **Copy A⁻¹ as rows**
-- **§3 Verification:** A·A⁻¹ and A⁻¹·A, each shown next to I with a *Holds* verdict (or, for a singular A, why no X with AX = I can exist)
-- **§4 Elimination:** every elementary matrix and how it changes A, then the conclusion
+- **Step 3 · Results:** a plain verdict, your matrix next to the inverse (in vermilion), the inverse with the common fraction taken out, **Fractions / Decimals**, **Copy inverse**, **Edit matrix**, and the determinant, size, steps used and check result.
+- **Step 4 · Verify:** whether A × A⁻¹ and A⁻¹ × A both equal the identity matrix I (or, for a singular A, why no inverse can exist).
+- **Step 5 · Steps:** every row operation in plain words and in notation; open a step to see the matrix before and after it. The first step starts open; **Expand all / Collapse all** handle the rest.
 
-If you edit A after computing, §2–§4 are dimmed and marked as out of date until you compute again. **Reset workspace** clears everything and returns to an empty 3×3 matrix.
+**Edit matrix** (or stage 1 in the top bar) returns to the grid without losing the results. If you change A, the results are dimmed and a **Calculate again** button appears. **Start over** clears everything and returns to an empty 3×3 matrix.
 
 ## 13. How the math works (short version)
 
@@ -219,8 +219,8 @@ A = | 1  2  3 |
 
 | Situation | What the user sees |
 |---|---|
-| Empty cells | Amber cells and the alert *Matrix A is not complete yet*; the request is not sent |
-| Non-numeric value, `1/0`, `1e3`, … | Red cell and a message naming the row, column and fix |
+| Empty cells | Amber cells and the message *The matrix is not complete yet*, with a **Fill empty cells with 0** button; the request is not sent |
+| Non-numeric value, `1/0`, `1e3`, … | Red cell, a tooltip on the cell, and a message naming the row, column and fix |
 | Value outside −1000…1000 | Red cell: *outside the allowed range* |
 | Singular matrix | A clear *singular* status, det A = 0, and the reduced matrix showing the missing pivot |
 | Malformed or non-square API payload | HTTP 400 with `{title, message, remedy}` |
@@ -242,13 +242,13 @@ python -m unittest discover -s tests -v
 node --test tests/test_frontend.js
 ```
 
-The Python suite (36 tests) compares results with hand-worked inverses, an independent cofactor/adjugate implementation, and NumPy (when installed). It also covers parsing, edge cases and the HTTP API. See [QA_REPORT.md](QA_REPORT.md) for the latest results.
+The Python suite (41 tests) compares results with hand-worked inverses, an independent cofactor/adjugate implementation, and NumPy (when installed). It also covers parsing, edge cases and the HTTP API. See [QA_REPORT.md](QA_REPORT.md) for the latest results.
 
 ## 17. Known limitations
 
 - The maximum size is 10×10, and entries must be between −1000 and 1000. Both limits are set at the top of `app.py`.
 - Scientific notation is not accepted.
-- For 9×9 and 10×10 matrices, the step-by-step HTML can reach about 2 MB (about 100 steps × 4 matrices). It still renders, and only the first 6 steps are shown until you expand the log, but it is heavy on low-end phones.
+- For 9×9 and 10×10 matrices, the step-by-step HTML can reach about 2 MB (about 100 steps × 4 matrices). Steps start collapsed (one line each), but the page is still heavy on low-end phones.
 - Exact fractions can have very long numerators and denominators. Those cells scroll horizontally instead of wrapping.
 - Decimal view is rounded to 6 significant digits. Use Exact for precise values.
 - Row tracing by hover needs a mouse; touch users see the static highlighting.

@@ -1,5 +1,38 @@
 # QA Report
 
+## Addendum — v3.1.0 first-time-user UX pass (2026-11-19)
+
+Every result below was actually executed.
+
+| Check | Result |
+|---|---|
+| `python -m unittest discover -s tests` | **41 / 41 passed** (adds 4 plain-language step tests) |
+| `node --test tests/test_frontend.js` | **8 / 8 passed** (adds `pastePlacement`) |
+| Browser console | 0 errors |
+
+User journey, run in the browser pane against `python app.py`:
+
+| # | Scenario | Actual |
+|---|---|---|
+| J1 | First load | Stage 1 current; stages 3–5 locked with the tooltip "Available after you calculate"; clicking locked "Steps" does nothing |
+| J2 | Calculate with all cells empty | "The matrix is not complete yet — There are 9 empty cells (marked in the grid)", 9 amber cells, each with the tooltip "This cell is empty. Type a number (use 0 for zero)." |
+| J3 | Click **Fill empty cells with 0** | All 9 cells become 0; status "All 9 cells filled · ready to calculate"; stage 1 turns green |
+| J4 | Calculate the zero matrix | "✕ This matrix has no inverse — The determinant is 0…"; Verify: "Nothing to check: there is no inverse" |
+| J5 | Load "3 × 3 — needs a row swap" | Out-of-date notice with **Calculate again** appears; pressing it gives "✓ This matrix has an inverse — The determinant is 13"; factored form (1/13)·[…] on one line; facts: Determinant 13, Size 3 × 3, Steps used 7, Check Passed; Verify: "Check passed", both rows "Matches I"; all five stages green |
+| J6 | Steps | 7 rows, first open; Step 1 reads "Swap row 1 and row 2, because column 1 needs a nonzero number on the diagonal. R1 ↔ R2 Swap rows"; Expand all → 7/7 open, Collapse all → 0/7 |
+| J7 | Decimals toggle | −0.230769, 0.0769231, … with the note on rounding |
+| J8 | Copy inverse | Status message shown (the hidden test pane blocks clipboard access, so the fallback message appeared, as designed) |
+| J9 | **Edit matrix** | Scrolls to the grid, focuses cell (1,1); results stay visible |
+| J10 | Paste a 2 × 4 block into row 2, column 1 of the 3 × 3 | Matrix grows to 4 × 4; row 2 = 1,2,3,4; row 1 keeps 0,2,1; results marked out of date; stage ticks cleared |
+| J11 | 375 px phone | No horizontal overflow; all five stages fit (non-current ones show numbers only); every control ≥ 32 px tall except the logo link |
+| J12 | 768 px tablet, random 10 × 10 | 99 collapsible steps, first open; no page overflow |
+
+Defects found and fixed during this pass: the factored equation split `A` from its `⁻¹` and wrapped the matrix onto a new line (now one non-wrapping group); the step disclosure chevron was too small; the stage bar was cut off on phones; scale notation used an ASCII hyphen.
+
+Not covered: real keyboard focus rings in a foreground window (the global `:focus-visible` rule exists, but the hidden pane never takes document focus), physical devices, and screen-reader testing.
+
+---
+
 ## Addendum — v3.0.0 "Inverse Workbench" redesign (2026-11-18)
 
 Re-run after the redesign. All results below were actually executed.

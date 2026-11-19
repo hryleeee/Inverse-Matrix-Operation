@@ -161,9 +161,38 @@ def row_operation_label(op, target, source=None, multiplier=None):
     if op == 'swap':
         return f'R{r} ↔ R{source + 1}'
     if op == 'scale':
-        return f'R{r} ← ({number_text(multiplier)}) R{r}'
+        return f'R{r} ← ({plain_number(multiplier)}) R{r}'
     sign = '+' if multiplier >= 0 else '−'
     return f'R{r} ← R{r} {sign} ({number_text(abs(multiplier))}) R{source + 1}'
+
+
+def plain_number(n):
+    """Exact value with a typographic minus, for prose ('−5/2')."""
+    return number_text(n).replace('-', '−')
+
+
+def row_operation_explanation(op, target, source=None, multiplier=None, column=0):
+    """The same row operation in plain language, for first-time users."""
+    r, c = target + 1, column + 1
+    if op == 'swap':
+        return (f'Swap row {r} and row {source + 1}, because column {c} needs a nonzero '
+                f'number on the diagonal.')
+    if op == 'scale':
+        pivot = 1 / multiplier
+        if multiplier.denominator == 1:
+            action = f'Multiply row {r} by {plain_number(multiplier)}'
+        elif pivot.denominator == 1:
+            action = f'Divide row {r} by {plain_number(pivot)}'
+        else:
+            action = f'Multiply row {r} by {plain_number(multiplier)}'
+        return f'{action} so its diagonal entry becomes 1.'
+    entry = -multiplier  # the value being cleared from row `target`
+    times = '' if abs(entry) == 1 else f'{plain_number(abs(entry))} × '
+    if entry > 0:
+        action = f'Subtract {times}row {source + 1} from row {r}'
+    else:
+        action = f'Add {times}row {source + 1} to row {r}'
+    return f'{action} to make the entry in column {c} zero.'
 
 
 def invert_with_elementary_matrices(a):
@@ -185,7 +214,7 @@ def invert_with_elementary_matrices(a):
     steps = []
     determinant = Fraction(1)
 
-    def record(op, target, source=None, multiplier=None):
+    def record(op, target, source=None, multiplier=None, column=0):
         nonlocal left, product
         before = left
         e = do_row_operation(identity(n), op, target, source, multiplier)
@@ -199,6 +228,7 @@ def invert_with_elementary_matrices(a):
             'index': len(steps) + 1,
             'op': op,
             'description': row_operation_label(op, target, source, multiplier),
+            'explanation': row_operation_explanation(op, target, source, multiplier, column),
             'e': e, 'before': before, 'after': left, 'product': product,
             'affected': (target, source) if op == 'swap' else (target,),
         })
@@ -210,15 +240,15 @@ def invert_with_elementary_matrices(a):
             return {'invertible': False, 'inverse': None, 'determinant': Fraction(0),
                     'steps': steps, 'reduced': left, 'failure_column': pivot_col + 1}
         if pivot_row != pivot_col:
-            record('swap', pivot_col, source=pivot_row)
+            record('swap', pivot_col, source=pivot_row, column=pivot_col)
             determinant = -determinant
         pivot = left[pivot_col][pivot_col]
         determinant *= pivot
         if pivot != 1:
-            record('scale', pivot_col, multiplier=1 / pivot)
+            record('scale', pivot_col, multiplier=1 / pivot, column=pivot_col)
         for row in range(n):
             if row != pivot_col and left[row][pivot_col] != 0:
-                record('add', row, source=pivot_col, multiplier=-left[row][pivot_col])
+                record('add', row, source=pivot_col, multiplier=-left[row][pivot_col], column=pivot_col)
 
     verify(left == identity(n), 'Final reduction is not the identity matrix')
     verify(matmul(product, a) == identity(n), 'Left inverse check A^-1 A = I failed')
@@ -265,26 +295,32 @@ def solution_to_html(a, run):
     italic serif variables; numbers stay in the monospaced face.
     """
     if not run['steps']:
-        parts = ['<p class="sol-note"><var>A</var> is already <var>I</var>; no row operations are needed.</p>']
+        parts = ['<p class="sol-note"><var>A</var> is already the identity matrix <var>I</var>, '
+                 'so no row operations are needed.</p>']
     else:
         parts = [f'<ol class="sol-steps" data-count="{len(run["steps"])}">']
     for step in run['steps']:
         i, affected = step['index'], step['affected']
+        # Each step is a collapsible row: plain-language sentence + notation in the
+        # summary, the before/after matrices in the body.
         parts.append(
-            f'<li class="sol-step" style="--i:{min(i, 14)}">'
-            f'<div class="sol-head"><span class="op-num">E<sub>{i}</sub></span>'
-            f'<span class="sol-expr">{escape(step["description"])}</span>'
-            f'<span class="op-kind">{OP_NAMES[step["op"]]}</span></div>'
-            '<div class="work">'
+            f'<li class="sol-step" style="--i:{min(i, 14)}"><details class="step">'
+            f'<summary class="sol-head"><span class="op-num">Step {i}</span>'
+            f'<span class="step-text"><span class="step-plain">{escape(step["explanation"])}</span>'
+            f'<span class="step-meta"><span class="sol-expr">{escape(step["description"])}</span>'
+            f'<span class="op-kind">{OP_NAMES[step["op"]]}</span></span></span></summary>'
+            '<div class="step-body"><div class="work">'
+            + labeled_matrix(f'Before, <var>A</var><sub>{i - 1}</sub>', step['before'], f'before{i}', affected)
+            + '<span class="equals" aria-label="becomes">→</span>'
+            + labeled_matrix(f'After, <var>A</var><sub>{i}</sub>', step['after'], f'after{i}', affected)
+            + '</div><details class="entry-details"><summary>Show as matrix multiplication '
+            f'(<var>E</var><sub>{i}</sub> and running product <var>P</var><sub>{i}</sub>)</summary>'
+            '<div class="details-body"><div class="work">'
             + labeled_matrix(f'<var>E</var><sub>{i}</sub>', step['e'], f'e{i}', affected)
-            + '<span class="times" aria-hidden="true">·</span>'
-            + labeled_matrix(f'<var>A</var><sub>{i - 1}</sub>', step['before'], f'before{i}', affected)
-            + '<span class="equals" aria-label="gives">→</span>'
-            + labeled_matrix(f'<var>A</var><sub>{i}</sub>', step['after'], f'after{i}', affected)
-            + '</div><details class="entry-details"><summary>Running product '
-            f'<var>P</var><sub>{i}</sub> = {product_chain(i, 4)}</summary><div class="details-body">'
-            + labeled_matrix(f'<var>P</var><sub>{i}</sub>', step['product'], f'product{i}', affected)
-            + '</div></details></li>')
+            + labeled_matrix(f'<var>P</var><sub>{i}</sub> = {product_chain(i, 4)}', step['product'], f'product{i}', affected)
+            + '</div><p class="sol-note">Multiplying <var>A</var><sub>' + str(i - 1) + '</sub> on the left by '
+            f'<var>E</var><sub>{i}</sub> performs this row operation. After the last step, '
+            '<var>P</var> is the inverse.</p></div></details></div></details></li>')
     if run['steps']:
         parts.append('</ol>')
     if run['invertible']:
@@ -294,14 +330,15 @@ def solution_to_html(a, run):
                  else '<var>A</var> = <var>I</var> &nbsp;⇒&nbsp; <var>A</var><sup>−1</sup> = <var>I</var>')
         parts.append(
             '<div class="sol-final"><p class="sub-title">Conclusion</p>'
-            f'<p>The left factor reduces <var>A</var> to <var>I</var>, so it is the inverse:</p>'
+            '<p>The steps turned <var>A</var> into the identity matrix <var>I</var>. Doing the same steps to '
+            '<var>I</var> produces the inverse:</p>'
             f'<p class="proof-formula">{proof}</p></div>')
     else:
         parts.append(
             '<div class="sol-final singular"><p class="sub-title">Conclusion: no pivot in column '
             f'{run["failure_column"]}</p>'
-            f'<p>Column {run["failure_column"]} has no nonzero entry on or below the diagonal. '
-            '<var>A</var> cannot be reduced to <var>I</var>, so it is singular (det <var>A</var> = 0).</p>'
+            f'<p>Column {run["failure_column"]} has only zeros on and below the diagonal, so no step can put a 1 there. '
+            '<var>A</var> cannot be turned into <var>I</var>: it is singular (det <var>A</var> = 0) and has no inverse.</p>'
             '<div class="work">'
             + labeled_matrix('Reduced <var>A</var>', run['reduced'], 'reduced')
             + '</div></div>')

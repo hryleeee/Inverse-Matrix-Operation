@@ -24,6 +24,7 @@
 | `verify(cond, msg)` | Raises `VerificationError`. Used instead of `assert` so the checks still run under `python -O` |
 | `decimal_text(n)` | Rounds to 6 significant digits using `Decimal`, so it never overflows the way `float` can |
 | `matrix_to_html`, `labeled_matrix`, `solution_to_html` | Server-side HTML for the elimination log. All numbers pass through `html.escape`. Labels are built only from internal strings. Math symbols are wrapped in `<var>` so CSS can set them as italic serif |
+| `row_operation_explanation(...)`, `plain_number(n)` | Plain-language sentence for each step ("Divide row 1 by 2 so its diagonal entry becomes 1."), stored as `explanation` beside the notation `description` |
 | `factored(matrix)` | Writes A⁻¹ = (1/d)·N with d the lcm of the denominators and N integral. Returns `None` when d = 1 or d > 10⁶ |
 
 ## 3. HTTP API
@@ -83,19 +84,22 @@ Errors return `{"success": false, "error": {"title", "message", "remedy"}}`:
 
 ```
 state = { size, renderedSize, values[][] (strings), randMin, randMax, showEmpty,
-          result, view, busy, stepsExpanded }
+          result, stale, view, busy }
 
-input event ─► state.values ─► updateStatus() ─► cell classes, error text, "x of n² entries"
-                         └──► markChanged() ─► §2–§4 dimmed + stale note
-solve() ─► client validation ─► fetch /calculate ─► renderResult()
-                                             ├─ renderInverse()       §2 status, A⁻¹, factored form, facts, exact/decimal, copy
-                                             ├─ renderVerification()  §3 A·A⁻¹ and A⁻¹·A next to I, with verdicts
-                                             ├─ renderSteps()         §4 server HTML + collapse above 10 steps
-                                             └─ setNavAvailability()  enables the §2–§4 navigation links
+input event ─► state.values ─► updateStatus() ─► cell classes + tooltips, error text, "x of n² cells filled"
+                         └──► markChanged() ─► results dimmed + "Calculate again" note
+solve() ─► client validation ─► (incomplete: alert with "Fill empty cells with 0")
+        └─► fetch /calculate ─► renderResult()
+                                 ├─ renderResults()       Step 3: verdict, A → A⁻¹, factored form, format toggle, copy, facts
+                                 ├─ renderVerification()  Step 4: verdict + A×A⁻¹ and A⁻¹×A next to I
+                                 ├─ renderSteps()         Step 5: server HTML, first step opened
+                                 └─ setNavAvailability() + updateStages()
 ```
 
-- `renderMatrix()` builds one CSS grid: row 1 holds the column indices, column 1 holds the row indices, and a bracket frame is laid over the n×n block of cells. Cells added by a resize (index ≥ `renderedSize`) get an `is-new` entrance animation.
-- An `IntersectionObserver` marks the navigation link of the section in view. Disabled links (`aria-disabled="true"`) do not navigate.
+- `renderMatrix()` builds one CSS grid: row 1 holds the column numbers, column 1 holds the row numbers, and a bracket frame is laid over the n×n block of cells. Cells added by a resize (index ≥ `renderedSize`) get an `is-new` entrance animation.
+- **Workflow stages** (masthead): `updateStages()` marks a stage *done* (green number) when its work is complete: stage 1 when every cell is valid, stages 2–5 when a result exists and is not stale. An `IntersectionObserver` marks the stage in view as *current* (`aria-current="step"`). Stages 3–5 carry `aria-disabled="true"` and a tooltip until the first calculation, and do not navigate.
+- `goTo(id)` scrolls to a stage; returning to the matrix focuses its first cell, and "Calculate" focuses the Calculate button. Results are kept while the user edits.
+- `pastePlacement()` (pure, unit-tested) decides where a pasted block goes: a square block in the top-left cell replaces the matrix; any other block grows the matrix just enough to fit, up to 10×10, and reports anything that did not fit.
 
 - `showEmpty` stays false until the user first tries to calculate, so empty cells are not shown as errors while the user is still typing.
 - A JSON-only check on responses tells "server returned an unexpected page" apart from "server unreachable".
@@ -111,7 +115,7 @@ The identity is meant to read like a printed linear algebra text on graph paper,
 - **Structure:** each section is a "sheet" with a heavy top rule, a left label column (§ number, title, meta) and a content column. There are no rounded cards and no shadows. Hierarchy comes from rules, type and spacing.
 - **Matrices:** printed brackets with short serifs. Editable cells are boxes with an ink underline on graph paper, with row and column indices around them. The inverse uses vermilion brackets, intermediate matrices in the log use thin graphite brackets, and verified products are set in green.
 - **Motion:** new cells scale in after a resize, focus draws a vermilion underline, a vermilion rule draws across each result section as it appears (staggered 0 / 80 / 160 ms), log steps appear with a 45 ms stagger, and running-product panels fade open. Under `prefers-reduced-motion`, all of this is reduced to instant changes.
-- **Layout:** label column and content at 860 px and above, stacked below. Below 640 px the navigation becomes a scrollable strip. Matrix cells keep a usable minimum width (3.9 rem on phones), and wide matrices scroll inside their own frame, so the page never scrolls sideways.
+- **Layout:** label column and content at 860 px and above, stacked below. Below 980 px the stage bar moves to its own row; below 480 px only the current stage shows its name (the others show their number, with the name kept for screen readers). Buttons and stepper controls are at least 40 px tall. Matrix cells keep a usable minimum width (3.9 rem on phones), and wide matrices scroll inside their own frame, so the page never scrolls sideways.
 
 ## 6. Important implementation decisions
 
@@ -124,5 +128,7 @@ The identity is meant to read like a printed linear algebra text on graph paper,
 | Remove the "Type them / Random" mode toggle | Switching it back to "Type them" erased every entry. It is replaced by explicit Random / Identity / Clear actions |
 | `MAX_CONTENT_LENGTH = 64 KB` | Rejects oversized bodies before parsing |
 | No framework and no build step | The app is small. Plain JS keeps setup to `pip install flask` |
-| Sequential sections (§2–§4) instead of Answer/Steps tabs | The inverse, its verification and its derivation read in order like a worked solution. The navigation still jumps directly to each one |
-| Collapse elimination logs only when longer than 10 steps | Hiding one or two steps of a short log adds a click without saving any reading |
+| Sequential sections instead of Answer/Steps tabs | The inverse, its verification and its derivation read in order like a worked solution. The stage bar still jumps directly to each one |
+| Name the UI after the user's task (Enter matrix, Calculate, Results, Verify, Steps; Size, Examples, Start over) | First-time users should not need to know "order", "elimination" or "workspace". The mathematical notation is still shown, next to plain language |
+| Every step collapsible, first one open | A one-line summary per step keeps long solutions scannable (99 steps for a 10×10); opening the first step shows newcomers what a step contains. This replaced the earlier "show first 6 steps" collapse |
+| Paste grows the matrix instead of truncating | Truncating silently lost data; growing to fit (up to 10×10) matches what users expect from a spreadsheet |

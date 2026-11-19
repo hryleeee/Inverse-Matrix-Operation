@@ -179,6 +179,47 @@ class AgainstReference(unittest.TestCase):
         self.assertEqual(matmul(a, run['inverse']), identity(10))
 
 
+class PlainLanguageSteps(unittest.TestCase):
+    """Each step's explanation must describe exactly the operation performed."""
+
+    def explanations(self, rows):
+        return [s['explanation'] for s in invert_with_elementary_matrices(parse_matrix(rows))['steps']]
+
+    def test_running_example(self):
+        self.assertEqual(self.explanations([['2', '1'], ['5', '3']]), [
+            'Divide row 1 by 2 so its diagonal entry becomes 1.',
+            'Subtract 5 × row 1 from row 2 to make the entry in column 1 zero.',
+            'Multiply row 2 by 2 so its diagonal entry becomes 1.',
+            'Subtract 1/2 × row 2 from row 1 to make the entry in column 2 zero.',
+        ])
+
+    def test_swap_negative_and_fraction_wording(self):
+        ex = self.explanations([['0', '2', '1'], ['1', '0', '3'], ['2', '1', '0']])
+        self.assertEqual(ex[0], 'Swap row 1 and row 2, because column 1 needs a nonzero number on the diagonal.')
+        self.assertIn('Subtract row 2 from row 3 to make the entry in column 2 zero.', ex)  # multiple of 1
+        self.assertIn('Multiply row 3 by −2/13 so its diagonal entry becomes 1.', ex)
+        self.assertEqual(self.explanations([['-4']]), ['Divide row 1 by −4 so its diagonal entry becomes 1.'])
+        self.assertEqual(self.explanations([['1', '0'], ['-3', '1']]),
+                         ['Add 3 × row 1 to row 2 to make the entry in column 1 zero.'])
+
+    def test_explanation_matches_operation(self):
+        # Independent check: replaying each step's notation reproduces 'after'.
+        rng = random.Random(11)
+        for _ in range(40):
+            n = rng.randint(2, 4)
+            a = [[F(rng.randint(-5, 5)) for _ in range(n)] for _ in range(n)]
+            for step in invert_with_elementary_matrices(a)['steps']:
+                self.assertEqual(matmul(step['e'], step['before']), step['after'])
+                self.assertTrue(step['explanation'].endswith('.'))
+
+    def test_steps_are_collapsible_in_html(self):
+        d = app.test_client().post('/calculate', json={'matrix': [['2', '1'], ['5', '3']]}).get_json()
+        html = d['solution_html']
+        self.assertEqual(html.count('<details class="step">'), 4)
+        self.assertIn('Divide row 1 by 2', html)
+        self.assertIn('R1 ← (1/2) R1', html)
+
+
 class Parsing(unittest.TestCase):
     def test_accepted_formats(self):
         cases = {'5': 5, '-5': -5, '+5': 5, '0.5': F(1, 2), '.5': F(1, 2), '5.': 5,

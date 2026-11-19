@@ -1,5 +1,32 @@
 # Changelog
 
+## [3.1.0] — 2026-11-19 — First-time-user UX pass
+
+### Changed
+- **Workflow stages.** The top bar is now a five-stage progress bar: **1 Enter matrix · 2 Calculate · 3 Results · 4 Verify · 5 Steps**. A stage turns green when its work is done. Stages 3–5 are locked (dashed, with a tooltip) until the first calculation. "How it works" moved to a small link.
+- **Plain labels.** "Order" → **Size**, "Load" → **Examples**, "Fill" → **Quick fill**, "Compute A⁻¹" → **Calculate inverse**, "Reset workspace" → **Start over**, "Inverse / Verification / Elimination" → **Results / Verify / Steps**, "A ∈ ℚⁿˣⁿ" → **Matrix A · n × n**. Section labels read "Step 1 … Step 5", matching the stage bar.
+- **Shorter introduction.** One heading and one sentence; the decorative Fig. 1 and the technical lead paragraph were removed.
+- **Results** open with a plain verdict ("This matrix has an inverse" / "This matrix has no inverse"), then show your matrix and the inverse side by side (original in ink, answer in vermilion), the inverse with the common fraction taken out, **Fractions (exact) / Decimals**, **Copy inverse**, **Edit matrix**, and a facts row (Determinant, Size, Steps used, Check).
+- **Verify** opens with "Check passed: the answer is correct" and explains what the identity matrix is.
+- **Steps** are now collapsible rows. Each shows a plain-language sentence, the notation and the kind of operation. Opening a row shows the matrix before and after; the elementary matrix and running product sit one level deeper. The first step starts open, and **Expand all / Collapse all** replace the old "show first 6 steps".
+- **Bigger targets.** Stepper, tool buttons, selects and stage links are at least 40 px tall. Quick-fill actions are now bordered buttons instead of underlined text.
+- **Phones.** The stage bar shows only the current stage's name (the others show numbers, with names kept for screen readers), so all five fit at 375 px.
+
+### Added
+- Plain-language explanation for every row operation, generated on the server (`row_operation_explanation`). For example: "Subtract 5 × row 1 from row 2 to make the entry in column 1 zero."
+- **Fill empty cells with 0** button in the "matrix is not complete" message.
+- Per-cell tooltips on empty or invalid cells, saying what to fix.
+- **Calculate again** button in the out-of-date notice; **Edit matrix** returns to the grid (first cell focused) without discarding results.
+- Size help text: rows and columns change together, and numbers are kept.
+- Paste grows the matrix to fit a block pasted anywhere (up to 10×10) instead of dropping values; `pastePlacement()` helper with a unit test.
+- Tests: `PlainLanguageSteps` (4 tests) and a `pastePlacement` JS test. Totals are now 41 Python and 8 JS tests.
+
+### Fixed
+- Scale notation used an ASCII hyphen, `(-2/13)`; it now uses a true minus sign, `(−2/13)`.
+
+### Unchanged
+- All mathematics, validation limits, API fields and error codes. The `explanation` text is only part of `solution_html`; no API field was removed.
+
 ## [3.0.0] — 2026-11-18 — "Inverse Workbench" redesign
 
 ### Changed

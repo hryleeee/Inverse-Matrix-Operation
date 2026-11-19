@@ -37,6 +37,19 @@ test('parsePasted handles spreadsheet, CSV, spaces and brackets', () => {
     assert.deepEqual(ui.parsePasted('7'), [['7']]);
 });
 
+test('pastePlacement replaces, grows or reports overflow', () => {
+    // Square block into the top-left cell: becomes the whole matrix (may shrink).
+    assert.deepEqual(ui.pastePlacement(3, 0, 0, 2, 2, 10), { size: 2, replace: true, fits: true });
+    // Non-square block at the top-left: grow to fit, keep other values.
+    assert.deepEqual(ui.pastePlacement(2, 0, 0, 2, 4, 10), { size: 4, replace: false, fits: true });
+    // Block pasted further in: grow just enough.
+    assert.deepEqual(ui.pastePlacement(3, 1, 1, 3, 3, 10), { size: 4, replace: false, fits: true });
+    // Fits inside the current matrix: no change of size.
+    assert.deepEqual(ui.pastePlacement(5, 0, 1, 2, 2, 10), { size: 5, replace: false, fits: true });
+    // Too large: cap at max and report.
+    assert.deepEqual(ui.pastePlacement(9, 8, 8, 4, 4, 10), { size: 10, replace: false, fits: false });
+});
+
 test('resized keeps existing values and pads with empty cells', () => {
     assert.deepEqual(ui.resized([['1', '2'], ['3', '4']], 3), [['1', '2', ''], ['3', '4', ''], ['', '', '']]);
     assert.deepEqual(ui.resized([['1', '2'], ['3', '4']], 1), [['1']]);

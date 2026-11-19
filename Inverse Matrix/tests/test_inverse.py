@@ -77,8 +77,10 @@ class ElementaryInverseTests(unittest.TestCase):
         with app.test_client() as client:
             page = client.get('/')
             self.assertEqual(page.status_code, 200)
-            self.assertIn(b'Compute <var>A</var>', page.data)
+            self.assertIn(b'Calculate inverse', page.data)
             self.assertIn(b'id="verification"', page.data)
+            for stage in (b'Enter matrix', b'Calculate', b'Results', b'Verify', b'Steps'):
+                self.assertIn(stage, page.data)
             self.assertIn(b'id="matrix-input"', page.data)
             self.assertNotIn(b'Add operation', page.data)
 

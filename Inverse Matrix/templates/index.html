@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Compute the inverse of a square matrix with exact rational arithmetic and read every elementary matrix that produces it.">
+    <meta name="description" content="Find the inverse of a square matrix with exact fractions, a correctness check and every step explained.">
     <title>Inverse Workbench</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,42 +23,35 @@
                 <span class="wordmark-glyph" aria-hidden="true"><span class="wg-bracket">[</span><var>A</var><span class="wg-bracket">]</span><sup>−1</sup></span>
                 <span class="wordmark-name">Inverse Workbench</span>
             </a>
-            <nav class="nav" aria-label="Sections">
-                <a href="#workspace"><span class="nav-no">1</span>Matrix</a>
-                <a href="#result" data-needs-result aria-disabled="true"><span class="nav-no">2</span>Inverse</a>
-                <a href="#verification" data-needs-result aria-disabled="true"><span class="nav-no">3</span>Check</a>
-                <a href="#steps" data-needs-result aria-disabled="true"><span class="nav-no">4</span>Steps</a>
-                <a href="#method"><span class="nav-no">5</span>Method</a>
+            <!-- The five stages of the workflow; later stages unlock after a calculation. -->
+            <nav class="stages" aria-label="Workflow">
+                <ol>
+                    <li><a class="stage" href="#workspace" data-stage="enter"><span class="stage-no">1</span><span class="stage-name">Enter matrix</span></a></li>
+                    <li><a class="stage" href="#calculate" data-stage="calculate"><span class="stage-no">2</span><span class="stage-name">Calculate</span></a></li>
+                    <li><a class="stage" href="#result" data-stage="result" data-needs-result aria-disabled="true"><span class="stage-no">3</span><span class="stage-name">Results</span></a></li>
+                    <li><a class="stage" href="#verification" data-stage="verify" data-needs-result aria-disabled="true"><span class="stage-no">4</span><span class="stage-name">Verify</span></a></li>
+                    <li><a class="stage" href="#steps" data-stage="steps" data-needs-result aria-disabled="true"><span class="stage-no">5</span><span class="stage-name">Steps</span></a></li>
+                </ol>
             </nav>
-            <button type="button" class="text-btn theme-btn" id="theme-toggle" aria-pressed="false">Dark</button>
+            <div class="masthead-tools">
+                <a class="help-link" href="#method">How it works</a>
+                <button type="button" class="theme-btn" id="theme-toggle" aria-pressed="false">Dark</button>
+            </div>
         </div>
     </header>
 
     <main id="top">
         <section class="intro" aria-labelledby="intro-title">
-            <div class="intro-text">
-                <p class="kicker">Gauss–Jordan elimination · exact rational arithmetic</p>
-                <h1 id="intro-title">Compute <var>A</var><sup>−1</sup> and read every elementary matrix that produces it.</h1>
-                <p class="intro-lead">Entries are kept as exact fractions. A matrix is singular only when a pivot is exactly zero. No tolerance or rounding is involved.</p>
-            </div>
-            <figure class="intro-figure">
-                <div class="fig-eq" aria-label="A times A inverse equals I, for A equal to 2, 1; 5, 3">
-                    <div class="mx mx-sm"><table><tr><td>2</td><td>1</td></tr><tr><td>5</td><td>3</td></tr></table></div>
-                    <span class="fig-op">·</span>
-                    <div class="mx mx-sm mx-accent"><table><tr><td>3</td><td>−1</td></tr><tr><td>−5</td><td>2</td></tr></table></div>
-                    <span class="fig-op">=</span>
-                    <div class="mx mx-sm"><table><tr><td>1</td><td>0</td></tr><tr><td>0</td><td>1</td></tr></table></div>
-                </div>
-                <figcaption><span class="fig-no">Fig. 1</span> <var>A</var> · <var>A</var><sup>−1</sup> = <var>I</var> for a 2 × 2 matrix with det <var>A</var> = 1.</figcaption>
-            </figure>
+            <h1 id="intro-title">Find the inverse of a square matrix</h1>
+            <p class="intro-lead">Type your numbers and press <strong>Calculate inverse</strong>. You get the answer, a check that it is correct, and every step explained. All results are exact fractions, never rounded.</p>
         </section>
 
-        <!-- §1 Matrix A -->
+        <!-- Stage 1 + 2: enter the matrix, then calculate -->
         <section class="sheet" id="workspace" aria-labelledby="ws-title">
             <header class="sheet-label">
-                <span class="sec-no">§1</span>
-                <h2 id="ws-title">Matrix <var>A</var></h2>
-                <p class="sec-meta" id="fill-status" aria-live="polite">0 of 9 entries</p>
+                <span class="sec-no">Step 1</span>
+                <h2 id="ws-title">Enter your matrix</h2>
+                <p class="sec-meta" id="fill-status" aria-live="polite">0 of 9 cells filled</p>
             </header>
 
             <div class="sheet-body">
@@ -66,31 +59,32 @@
 
                 <div class="controls">
                     <div class="control">
-                        <span class="control-label" id="size-label">Order</span>
-                        <div class="stepper" role="group" aria-labelledby="size-label">
-                            <button type="button" class="stepper-btn" id="size-minus" aria-label="Decrease matrix order">&minus;</button>
+                        <span class="control-label" id="size-label">Size</span>
+                        <div class="stepper" role="group" aria-labelledby="size-label" aria-describedby="size-help">
+                            <button type="button" class="stepper-btn" id="size-minus" aria-label="Remove a row and a column" title="Remove a row and a column">&minus;</button>
                             <output class="stepper-value" id="size-value" aria-live="polite">3 × 3</output>
-                            <button type="button" class="stepper-btn" id="size-plus" aria-label="Increase matrix order">+</button>
+                            <button type="button" class="stepper-btn" id="size-plus" aria-label="Add a row and a column" title="Add a row and a column">+</button>
                         </div>
                     </div>
                     <div class="control">
-                        <label class="control-label" for="example-select">Load</label>
+                        <label class="control-label" for="example-select">Examples</label>
                         <select id="example-select" class="select">
-                            <option value="">Example matrix…</option>
+                            <option value="">Choose an example…</option>
                         </select>
                     </div>
                     <div class="control control-fill">
-                        <span class="control-label">Fill</span>
-                        <div class="fill-actions">
-                            <button type="button" class="text-btn" id="random-btn">Random</button>
-                            <button type="button" class="text-btn" id="identity-btn">Identity</button>
-                            <button type="button" class="text-btn" id="clear-btn">Clear</button>
+                        <span class="control-label" id="fill-label">Quick fill</span>
+                        <div class="fill-actions" role="group" aria-labelledby="fill-label">
+                            <button type="button" class="btn-tool" id="random-btn" title="Fill every cell with a random whole number">Random</button>
+                            <button type="button" class="btn-tool" id="identity-btn" title="1s on the diagonal, 0s everywhere else">Identity</button>
+                            <button type="button" class="btn-tool" id="clear-btn" title="Empty every cell (the size stays the same)">Clear</button>
                         </div>
                     </div>
                 </div>
+                <p class="control-help" id="size-help">A matrix must be square to have an inverse, so rows and columns change together. Your numbers are kept when you resize.</p>
 
                 <details class="range-details" id="range-details">
-                    <summary>Random entries range from <span id="range-summary">−10 to 10</span></summary>
+                    <summary>Random numbers go from <span id="range-summary">−10 to 10</span> (change)</summary>
                     <div class="range">
                         <label for="rand-min" class="sr-only">Lowest random number</label>
                         <input type="text" inputmode="numeric" id="rand-min" class="num-input" autocomplete="off">
@@ -103,8 +97,8 @@
 
                 <div class="instrument">
                     <div class="instrument-bar">
-                        <span class="instrument-title"><var>A</var> ∈ ℚ<sup id="space-dim">3×3</sup></span>
-                        <span class="instrument-hint">Arrow keys move · Enter advances · Ctrl+Enter computes</span>
+                        <span class="instrument-title">Matrix <var>A</var> · <span id="space-dim">3 × 3</span></span>
+                        <span class="instrument-hint">Click a cell and type. Tab or arrow keys move between cells.</span>
                     </div>
                     <div class="instrument-field">
                         <div class="matrix-input" id="matrix-input"></div>
@@ -113,63 +107,75 @@
                 <p class="field-error" id="matrix-error" role="alert"></p>
 
                 <p class="hint">
-                    Integers <code>4</code>, decimals <code>-0.5</code> or fractions <code>3/4</code>, from {{ limits.minValue }} to {{ limits.maxValue }}.
-                    Order 1 to {{ limits.maxDimension }}. To set the whole matrix at once, paste rows from a spreadsheet into the top-left cell.
+                    Each cell takes a whole number <code>4</code>, a decimal <code>-0.5</code> or a fraction <code>3/4</code>, between {{ limits.minValue }} and {{ limits.maxValue }}.
+                    <strong>Tip:</strong> copy cells from Excel or Google Sheets and paste them into any cell.
                 </p>
 
-                <div class="actions">
-                    <button type="button" class="btn-primary" id="solve-btn">
-                        <span class="spinner" aria-hidden="true"></span>
-                        <span class="btn-label">Compute <var>A</var><sup>−1</sup></span>
-                    </button>
-                    <button type="button" class="text-btn" id="reset-btn">Reset workspace</button>
+                <div class="calculate" id="calculate">
+                    <span class="sec-no calc-no">Step 2</span>
+                    <div class="actions">
+                        <button type="button" class="btn-primary" id="solve-btn">
+                            <span class="spinner" aria-hidden="true"></span>
+                            <span class="btn-label">Calculate inverse</span>
+                        </button>
+                        <button type="button" class="btn-tool" id="reset-btn" title="Clear the matrix and all results">Start over</button>
+                        <span class="shortcut">Shortcut: <kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- §2 Inverse -->
+        <!-- Stage 3: results -->
         <section class="sheet result-sheet" id="result" aria-labelledby="result-title" hidden>
             <header class="sheet-label">
-                <span class="sec-no">§2</span>
-                <h2 id="result-title" tabindex="-1">Inverse</h2>
+                <span class="sec-no">Step 3</span>
+                <h2 id="result-title" tabindex="-1">Results</h2>
                 <p class="sec-meta" id="result-meta"></p>
             </header>
             <div class="sheet-body">
-                <p class="stale-note" id="stale-note" hidden><var>A</var> has changed since this result was computed. Compute again to update §2–§4.</p>
+                <div class="stale-note" id="stale-note" hidden>
+                    <span>You changed the matrix after calculating. These results are for the old matrix.</span>
+                    <button type="button" class="btn-tool" id="recalc-btn">Calculate again</button>
+                </div>
                 <div id="result-body"></div>
             </div>
         </section>
 
-        <!-- §3 Verification -->
+        <!-- Stage 4: verify -->
         <section class="sheet result-sheet" id="verification" aria-labelledby="verify-title" hidden>
             <header class="sheet-label">
-                <span class="sec-no">§3</span>
-                <h2 id="verify-title">Verification</h2>
-                <p class="sec-meta">Exact products, compared entry by entry with <var>I</var></p>
+                <span class="sec-no">Step 4</span>
+                <h2 id="verify-title">Verify</h2>
+                <p class="sec-meta">Is the answer correct?</p>
             </header>
             <div class="sheet-body" id="verify-body"></div>
         </section>
 
-        <!-- §4 Steps -->
+        <!-- Stage 5: steps -->
         <section class="sheet result-sheet" id="steps" aria-labelledby="steps-title" hidden>
             <header class="sheet-label">
-                <span class="sec-no">§4</span>
-                <h2 id="steps-title">Elimination</h2>
+                <span class="sec-no">Step 5</span>
+                <h2 id="steps-title">Steps</h2>
                 <p class="sec-meta" id="steps-meta"></p>
             </header>
             <div class="sheet-body">
-                <p class="sol-lead">Each row operation is multiplication on the left by an elementary matrix: <var>A</var><sub><var>i</var></sub> = <var>E</var><sub><var>i</var></sub><var>A</var><sub><var>i</var>−1</sub>. The running product <var>P</var><sub><var>i</var></sub> = <var>E</var><sub><var>i</var></sub> ··· <var>E</var><sub>1</sub> becomes <var>A</var><sup>−1</sup>. Point at a highlighted row to trace it through a step.</p>
+                <div class="steps-head">
+                    <p class="sol-lead">Each step changes one row of <var>A</var>, until <var>A</var> becomes the identity matrix <var>I</var>. Open a step to see the matrix before and after it.</p>
+                    <div class="steps-tools">
+                        <button type="button" class="btn-tool" id="expand-all-btn">Expand all</button>
+                        <button type="button" class="btn-tool" id="collapse-all-btn">Collapse all</button>
+                    </div>
+                </div>
                 <div id="steps-body"></div>
-                <button type="button" class="text-btn show-all" id="show-all-btn" hidden></button>
             </div>
         </section>
 
-        <!-- §5 Method -->
+        <!-- Reference -->
         <section class="sheet" id="method" aria-labelledby="method-title">
             <header class="sheet-label">
-                <span class="sec-no">§5</span>
-                <h2 id="method-title">Method</h2>
-                <p class="sec-meta">Reference</p>
+                <span class="sec-no">Reference</span>
+                <h2 id="method-title">How it works</h2>
+                <p class="sec-meta">The method behind the calculator</p>
             </header>
             <div class="sheet-body method-body">
                 <div class="method-eq">
@@ -178,19 +184,19 @@
                     <p class="display-eq"><var>A</var><sup>−1</sup> = <var>E</var><sub><var>k</var></sub> ··· <var>E</var><sub>2</sub><var>E</var><sub>1</sub></p>
                 </div>
                 <table class="ops-table">
-                    <caption class="sr-only">Elementary row operations</caption>
-                    <thead><tr><th scope="col">Operation</th><th scope="col">Notation</th><th scope="col">det <var>E</var></th></tr></thead>
+                    <caption class="sr-only">The three row operations</caption>
+                    <thead><tr><th scope="col">Row operation</th><th scope="col">Notation</th><th scope="col">Effect on det</th></tr></thead>
                     <tbody>
-                        <tr><td>Swap two rows</td><td class="mono">R<sub>i</sub> ↔ R<sub>j</sub></td><td class="mono">−1</td></tr>
-                        <tr><td>Scale a row by <var>c</var> ≠ 0</td><td class="mono">R<sub>i</sub> ← (c) R<sub>i</sub></td><td class="mono"><var>c</var></td></tr>
-                        <tr><td>Add a multiple of another row</td><td class="mono">R<sub>i</sub> ← R<sub>i</sub> + (c) R<sub>j</sub></td><td class="mono">1</td></tr>
+                        <tr><td>Swap two rows</td><td class="mono">R<sub>i</sub> ↔ R<sub>j</sub></td><td>changes the sign</td></tr>
+                        <tr><td>Multiply a row by <var>c</var> ≠ 0</td><td class="mono">R<sub>i</sub> ← (c) R<sub>i</sub></td><td>multiplies by <var>c</var></td></tr>
+                        <tr><td>Add a multiple of another row</td><td class="mono">R<sub>i</sub> ← R<sub>i</sub> + (c) R<sub>j</sub></td><td>no change</td></tr>
                     </tbody>
                 </table>
                 <ol class="method-list">
-                    <li>For each column, take the first nonzero entry on or below the diagonal as the pivot, swapping rows if needed.</li>
-                    <li>Scale the pivot row so the pivot is 1, then clear every other entry in the column.</li>
-                    <li>If a column has no nonzero pivot, <var>A</var> is singular and has no inverse.</li>
-                    <li>det <var>A</var> = (−1)<sup>swaps</sup> × the product of the pivots.</li>
+                    <li>Work column by column. Find a nonzero number on or below the diagonal, swapping rows if needed.</li>
+                    <li>Divide that row so the diagonal entry is 1, then make every other entry in the column 0.</li>
+                    <li>If a column has only zeros on and below the diagonal, the matrix is singular and has no inverse.</li>
+                    <li>Every step is also applied to the identity matrix. When <var>A</var> has become <var>I</var>, the identity has become <var>A</var><sup>−1</sup>.</li>
                 </ol>
             </div>
         </section>
