@@ -26,10 +26,10 @@ def main():
     server = make_server('127.0.0.1', port, app)
 
     if sys.platform == 'win32':
-        ctypes.windll.kernel32.SetConsoleTitleW('Inverse Workbench')
+        ctypes.windll.kernel32.SetConsoleTitleW('Inverse Calculator')
 
     print('=' * 52)
-    print('  INVERSE WORKBENCH  -  exact matrix inverse calculator')
+    print(' INVERSE CALCULATOR - exact matrix inverse calculator')
     print('=' * 52)
     print(f'  Running at {url}', flush=True)
     print('  Your browser should open automatically.')

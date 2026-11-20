@@ -1,4 +1,4 @@
-/* Inverse Workbench — browser interface.
+/* Inverse Calculator – browser interface.
  *
  * The browser only validates and collects input; all mathematics happens on
  * the server with exact fractions. Pure helpers (validation, paste parsing,

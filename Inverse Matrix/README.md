@@ -1,4 +1,4 @@
-# Inverse Workbench — Exact Matrix Inverse Calculator
+# Inverse Calculator – Exact Matrix Inverse Calculator
 
 *(Formerly "The Matrix".)*
 
@@ -273,7 +273,7 @@ python -m pip install pyinstaller
 ```
 
 ```bash
-python -m PyInstaller --onefile --console --name "Inverse Workbench" --add-data "templates;templates" --add-data "static;static" launcher.py
+python -m PyInstaller --onefile --console --name "Inverse Calculator" --add-data "templates;templates" --add-data "static;static" launcher.py
 ```
 
 Build it on Windows. The `;` separator in `--add-data` is Windows-specific.

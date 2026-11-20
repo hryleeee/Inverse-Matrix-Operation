@@ -1,4 +1,4 @@
-"""The Matrix - inverse of a square matrix using explicit elementary matrices.
+"""Inverse Calculator - inverse of a square matrix using explicit elementary matrices.
 
 Method
 ------

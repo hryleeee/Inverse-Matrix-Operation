@@ -1,6 +1,6 @@
 # Inverse-Matrix-Operation
 A modern, interactive mathematical application for calculating inverse matrices, exploring step-by-step solutions, and verifying results through matrix multiplication. Built with a mathematics-inspired interface focused on precision, clarity, and usability.
-Inverse Workbench — Exact Matrix Inverse Calculator
+Inverse Calculator — Exact Matrix Inverse Calculator
 (Formerly "The Matrix".)
 
 A local web application that finds the inverse A⁻¹ of a square matrix A and explains every step. It uses Gauss–Jordan elimination, and each row operation is shown as an elementary matrix Eᵢ. All arithmetic is done with exact fractions, so the answers have no rounding error.
